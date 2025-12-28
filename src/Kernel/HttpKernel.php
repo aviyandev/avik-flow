@@ -18,14 +18,25 @@ final class HttpKernel implements Kernel
 
     public function handle(mixed $request): Response
     {
-        $response = $this->pipeline->process(
-            $request,
-            $this->destination
-        );
+        try {
+            $response = $this->pipeline->process(
+                $request,
+                $this->destination
+            );
 
-        return $response instanceof Response
-            ? $response
-            : (new Response())->content((string) $response);
+            return $response instanceof Response
+                ? $response
+                : (new Response())->content((string) $response);
+        } catch (\Throwable $e) {
+            return $this->handleException($e);
+        }
+    }
+
+    private function handleException(\Throwable $e): Response
+    {
+        // Simple fallback. In a real framework, this would call an ExceptionHandler.
+        $content = "An error occurred: " . $e->getMessage();
+        return (new Response($content, 500));
     }
 
     public function terminate(mixed $request, mixed $response): void
